@@ -12,26 +12,39 @@ import {
 } from "react-icons/wi";
 
 export default function Home() {
-  const [city, setCity] = useState<string>("");
-  const [weather, setWeather] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [city, setCity] = useState("");
+  const [weather, setWeather] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const fetchWeather = async () => {
-    if (!city.trim()) return alert("Enter a city name!");
+    if (!city.trim()) {
+      setError("Please enter a city name!");
+      return;
+    }
     setLoading(true);
+    setError("");
+    setWeather(null);
+
     try {
       const res = await fetch(`/api/weather?city=${city}`);
       const data = await res.json();
-      setWeather(data);
+
+      if (data.error) {
+        setError(data.error);
+        setWeather(null);
+      } else {
+        setWeather(data);
+      }
     } catch (err) {
-      console.error("Weather fetch error:", err);
-      alert("Failed to fetch weather data.");
+      console.error("Fetch error:", err);
+      setError("Unable to fetch weather data. Please try again later.");
     } finally {
       setLoading(false);
     }
   };
 
-  const getWeatherIcon = (main: string) => {
+  const getWeatherIcon = (main) => {
     switch (main) {
       case "Clear":
         return <WiDaySunny className="text-yellow-400 text-7xl" />;
@@ -49,35 +62,62 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-sky-200 to-sky-500 text-gray-800 font-sans">
-      <h1 className="text-5xl font-extrabold mb-8 drop-shadow-lg text-white">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-sky-200 to-sky-500 text-gray-800 font-sans px-4">
+      <h1 className="text-5xl font-extrabold mb-8 drop-shadow-lg text-white text-center">
         🌤 Weather Forecast
       </h1>
 
-      <div className="flex gap-3 mb-8">
+      <div className="flex flex-col sm:flex-row gap-3 mb-8">
         <input
           type="text"
           placeholder="Enter city name..."
           value={city}
           onChange={(e) => setCity(e.target.value)}
-          className="p-3 w-64 rounded-xl border border-gray-300 bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 shadow"
+          className="p-3 w-64 sm:w-72 rounded-xl border border-gray-300 bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 shadow"
         />
         <button
           onClick={fetchWeather}
-          disabled={loading}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-md"
         >
           {loading ? "Loading..." : "Search"}
         </button>
       </div>
 
+      {/* ⚠️ Error Message */}
+      {error && (
+        <p className="text-red-600 bg-white/80 px-4 py-2 rounded-xl shadow-md mb-4">
+          {error}
+        </p>
+      )}
+
+      {/* 🌍 Weather Card */}
       {weather && weather.main && (
         <div className="bg-white/70 backdrop-blur-md p-8 rounded-3xl shadow-2xl text-center w-80 transition-transform hover:scale-105">
           <div className="mb-4 flex justify-center">
             {getWeatherIcon(weather.weather[0].main)}
           </div>
 
-          <h2 className="text-3xl font-bold mb-2">{weather.name}</h2>
+          {/* City, State, Country + Flag */}
+          <h2 className="text-3xl font-bold mb-1 flex items-center justify-center gap-2">
+            {weather.name}
+            {weather.sys?.country && (
+              <>
+                <span className="text-xl text-gray-600">
+                  , {weather.sys.country}
+                </span>
+                <img
+                  src={`https://flagcdn.com/48x36/${weather.sys.country.toLowerCase()}.png`}
+                  alt={weather.sys.country}
+                  className="w-6 h-4 rounded"
+                />
+              </>
+            )}
+          </h2>
+
+          {weather.state && (
+            <p className="text-gray-600 text-sm mb-2">{weather.state}</p>
+          )}
+
           <p className="capitalize text-gray-700 mb-4 text-lg">
             {weather.weather[0].description}
           </p>
