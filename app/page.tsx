@@ -12,20 +12,26 @@ import {
 } from "react-icons/wi";
 
 export default function Home() {
-  const [city, setCity] = useState("");
-  const [weather, setWeather] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [city, setCity] = useState<string>("");
+  const [weather, setWeather] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const fetchWeather = async () => {
     if (!city.trim()) return alert("Enter a city name!");
     setLoading(true);
-    const res = await fetch(`/api/weather?city=${city}`);
-    const data = await res.json();
-    setWeather(data);
-    setLoading(false);
+    try {
+      const res = await fetch(`/api/weather?city=${city}`);
+      const data = await res.json();
+      setWeather(data);
+    } catch (err) {
+      console.error("Weather fetch error:", err);
+      alert("Failed to fetch weather data.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getWeatherIcon = (main) => {
+  const getWeatherIcon = (main: string) => {
     switch (main) {
       case "Clear":
         return <WiDaySunny className="text-yellow-400 text-7xl" />;
@@ -49,16 +55,17 @@ export default function Home() {
       </h1>
 
       <div className="flex gap-3 mb-8">
-      <input
-        type="text"
-        placeholder="Enter city name..."
-        value={city}
-        onChange={(e) => setCity(e.target.value)}
-        className="p-3 w-64 rounded-xl border border-gray-300 bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 shadow"
-      />
+        <input
+          type="text"
+          placeholder="Enter city name..."
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          className="p-3 w-64 rounded-xl border border-gray-300 bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 shadow"
+        />
         <button
           onClick={fetchWeather}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-md"
+          disabled={loading}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {loading ? "Loading..." : "Search"}
         </button>
